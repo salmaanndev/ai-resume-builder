@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { resumeApi, aiApi } from '../api';
 import { Resume, Experience, Education, emptyResume } from '../types';
+import { DEFAULT_RESUME_FONT, RESUME_FONTS, ResumeFont } from '../constants/resumeFonts';
 import Input from '../components/Input';
 import Textarea from '../components/Textarea';
 import Button from '../components/Button';
@@ -50,7 +51,10 @@ export default function ResumeEditor() {
   const loadResume = async (resumeId: string) => {
     try {
       const { data } = await resumeApi.getOne(resumeId);
-      setResume(data);
+      setResume({
+        ...data,
+        fontFamily: data.fontFamily || DEFAULT_RESUME_FONT,
+      });
     } catch {
       navigate('/dashboard');
     } finally {
@@ -281,8 +285,35 @@ export default function ResumeEditor() {
 
       <div className="resume-print-hide max-w-3xl mx-auto px-4 py-8 space-y-8">
         <p className="text-sm text-gray-500 text-center -mt-4">
-          Optimized for a single A4 page with ATS-friendly formatting
+          AI generates content to fill a full A4 page — ATS-friendly single-page format
         </p>
+
+        {/* Font */}
+        <section className="bg-white rounded-xl border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Resume Font</h2>
+          <p className="text-sm text-gray-500 mb-4">Choose a commonly used font for your resume preview and PDF export.</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {RESUME_FONTS.map((font) => {
+              const selected = (resume.fontFamily || DEFAULT_RESUME_FONT) === font.id;
+              return (
+                <button
+                  key={font.id}
+                  type="button"
+                  onClick={() => setResume((prev) => ({ ...prev, fontFamily: font.id as ResumeFont }))}
+                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
+                    selected
+                      ? 'border-brand-500 bg-brand-50 text-brand-800 ring-1 ring-brand-500'
+                      : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                  style={{ fontFamily: font.family }}
+                >
+                  {font.label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Personal Info */}
         <section className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
@@ -521,7 +552,7 @@ export default function ResumeEditor() {
           </div>
           <div className="resume-print-body flex-1 overflow-auto p-8 flex flex-col items-center bg-gray-200">
             <p className="resume-print-hint text-sm text-gray-600 mb-4">
-              A4 single-page ATS format — use Print / Save PDF to export
+              Full A4 page layout — use Print / Save PDF to export
             </p>
             <ResumePreview resume={resume} />
           </div>
