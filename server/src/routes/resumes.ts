@@ -43,6 +43,23 @@ const resumeSchema = z.object({
     .optional(),
   skills: z.array(z.string()).optional(),
   template: z.enum(['modern', 'classic', 'minimal']).optional(),
+  fontFamily: z
+    .enum([
+      'arial',
+      'calibri',
+      'cambria',
+      'georgia',
+      'garamond',
+      'times-new-roman',
+      'helvetica',
+      'verdana',
+      'tahoma',
+      'trebuchet',
+      'roboto',
+      'open-sans',
+      'lato',
+    ])
+    .optional(),
 });
 
 router.get('/', async (_req: Request, res: Response): Promise<void> => {

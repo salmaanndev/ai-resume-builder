@@ -48,6 +48,25 @@ const resumeSchema = new Schema<IResumeDocument>(
     education: { type: [educationSchema], default: [] },
     skills: { type: [String], default: [] },
     template: { type: String, enum: ['modern', 'classic', 'minimal'], default: 'classic' },
+    fontFamily: {
+      type: String,
+      enum: [
+        'arial',
+        'calibri',
+        'cambria',
+        'georgia',
+        'garamond',
+        'times-new-roman',
+        'helvetica',
+        'verdana',
+        'tahoma',
+        'trebuchet',
+        'roboto',
+        'open-sans',
+        'lato',
+      ],
+      default: 'arial',
+    },
   },
   { timestamps: true }
 );

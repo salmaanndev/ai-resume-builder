@@ -28,6 +28,21 @@ export interface IPersonalInfo {
   summary: string;
 }
 
+export type ResumeFont =
+  | 'arial'
+  | 'calibri'
+  | 'cambria'
+  | 'georgia'
+  | 'garamond'
+  | 'times-new-roman'
+  | 'helvetica'
+  | 'verdana'
+  | 'tahoma'
+  | 'trebuchet'
+  | 'roboto'
+  | 'open-sans'
+  | 'lato';
+
 export interface IResume {
   _id: mongoose.Types.ObjectId;
   title: string;
@@ -36,6 +51,7 @@ export interface IResume {
   education: IEducation[];
   skills: string[];
   template: 'modern' | 'classic' | 'minimal';
+  fontFamily: ResumeFont;
   createdAt: Date;
   updatedAt: Date;
 }
