@@ -11,6 +11,7 @@ export const resumeApi = {
 
 export const aiApi = {
   generate: (data: {
+    fullName: string;
     jobTitle: string;
     yearsOfExperience?: string;
     skills?: string[];
