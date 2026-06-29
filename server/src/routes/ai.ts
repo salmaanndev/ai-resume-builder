@@ -1,6 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { chatComplete, isOpenRouterConfigured, parseJsonResponse } from '../config/openrouter';
+import {
+  ATS_SINGLE_PAGE_RULES,
+  enforceSinglePageExperience,
+  enforceSinglePageResume,
+  enforceSinglePageSkills,
+  enforceSinglePageSummary,
+  GeneratedResumePayload,
+  IMPROVE_SINGLE_PAGE_RULES,
+  SINGLE_PAGE_LIMITS,
+} from '../utils/resumeContentLimits';
 
 const router = Router();
 
@@ -22,19 +32,6 @@ const suggestSkillsSchema = z.object({
   currentSkills: z.array(z.string()).optional(),
 });
 
-const ATS_PAGE_RULES = `
-CRITICAL: Generate content that DENSELY FILLS a SINGLE A4 page (210mm × 297mm) with NO empty space left at the bottom:
-- Target ~45–50 lines of text total at 10pt font — the page must look fully utilized, not sparse
-- Use standard section names and plain text only (no tables, columns, icons, or graphics)
-- Summary: 4–5 substantial sentences (70–90 words) covering expertise, achievements, and career goals
-- Experience: 3–4 relevant roles, each with 4–5 detailed one-line bullet points using action verbs, metrics, and impact
-- Education: 2 entries; include honors, GPA, or relevant coursework in the description field when appropriate
-- Skills: 18–24 relevant skills as a flat list (enough to wrap across 2–3 lines)
-- Experience descriptions: newline-separated bullet points (no markdown)
-- Do NOT leave the page half-empty — add more bullets, skills, or education detail until the page is full
-- Must still fit on exactly one A4 page — do not overflow; balance density with the line budget above
-- Use common job titles and keywords recruiters and ATS systems scan for`;
-
 const aiNotConfigured = (res: Response): void => {
   res.status(503).json({
     message: 'OpenRouter API key not configured. Add OPENROUTER_API_KEY to server/.env',
@@ -54,7 +51,7 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
 ${data.yearsOfExperience ? `Years of experience: ${data.yearsOfExperience}` : ''}
 ${data.industry ? `Industry: ${data.industry}` : ''}
 ${data.skills?.length ? `Skills to include: ${data.skills.join(', ')}` : ''}
-${ATS_PAGE_RULES}
+${ATS_SINGLE_PAGE_RULES}
 
 Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 {
@@ -92,7 +89,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 }`;
 
     const content = await chatComplete(prompt, true);
-    const resume = parseJsonResponse(content);
+    const resume = enforceSinglePageResume(parseJsonResponse(content) as GeneratedResumePayload);
     res.json(resume);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -119,25 +116,28 @@ router.post('/improve', async (req: Request, res: Response): Promise<void> => {
       skills: 'skills list',
     };
 
-    const improveRules: Record<string, string> = {
-      summary:
-        'Write 4–5 substantial sentences (70–90 words) that help fill a full A4 resume page.',
-      experience:
-        'Return 4–5 detailed one-line bullet points (newline-separated), each with action verbs and metrics.',
-      skills:
-        'Return a comma-separated list of 18–24 relevant skills to fill the skills section on a full A4 page.',
-    };
-
     const prompt = `Improve this resume ${sectionLabels[data.section]} to be more professional, impactful, and ATS-friendly.
 ${data.jobTitle ? `Target job title: ${data.jobTitle}` : ''}
-${improveRules[data.section]}
+${IMPROVE_SINGLE_PAGE_RULES[data.section]}
+The entire resume must remain on a single A4 page — do not make this section longer than the limits above.
 
 Original content:
 ${data.content}
 
 Return ONLY the improved text, no explanations or markdown.`;
 
-    const improved = (await chatComplete(prompt)).trim();
+    let improved = (await chatComplete(prompt)).trim();
+
+    if (data.section === 'summary') {
+      improved = enforceSinglePageSummary(improved);
+    } else if (data.section === 'experience') {
+      improved = enforceSinglePageExperience(improved);
+    } else if (data.section === 'skills') {
+      improved = enforceSinglePageSkills(
+        improved.split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
+      ).join(', ');
+    }
+
     res.json({ improved });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -157,15 +157,32 @@ router.post('/suggest-skills', async (req: Request, res: Response): Promise<void
     }
 
     const data = suggestSkillsSchema.parse(req.body);
+    const remaining = Math.max(
+      0,
+      SINGLE_PAGE_LIMITS.maxSkills - (data.currentSkills?.length || 0)
+    );
 
-    const prompt = `Suggest 18–24 relevant ATS-friendly skills for a ${data.jobTitle} position to fill the skills section on a full A4 resume page.
-${data.currentSkills?.length ? `Already has: ${data.currentSkills.join(', ')}. Suggest additional skills only.` : ''}
+    if (remaining === 0) {
+      res.json({ skills: [] });
+      return;
+    }
+
+    const suggestCount = Math.min(remaining, SINGLE_PAGE_LIMITS.maxSuggestedSkills);
+
+    const prompt = `Suggest ${suggestCount} relevant ATS-friendly skills for a ${data.jobTitle} position.
+${data.currentSkills?.length ? `Already has: ${data.currentSkills.join(', ')}. Suggest additional skills only — do not repeat existing ones.` : ''}
+The full resume must fit on one A4 page — suggest at most ${suggestCount} skills.
 Use standard industry skill names that applicant tracking systems recognize.
 Return ONLY a JSON object with a "skills" array of skill strings, e.g. {"skills": ["Skill1", "Skill2"]}`;
 
     const content = await chatComplete(prompt, true);
     const parsed = parseJsonResponse(content) as { skills?: string[] } | string[];
-    const skills = Array.isArray(parsed) ? parsed : parsed.skills || [];
+    const rawSkills = Array.isArray(parsed) ? parsed : parsed.skills || [];
+    const skills = enforceSinglePageSkills([
+      ...(data.currentSkills || []),
+      ...rawSkills,
+    ]).slice(data.currentSkills?.length || 0);
+
     res.json({ skills });
   } catch (error) {
     if (error instanceof z.ZodError) {
