@@ -298,7 +298,7 @@ export default function ResumeEditor() {
 
       <div className="resume-print-hide max-w-3xl mx-auto px-4 py-8 space-y-8">
         <p className="text-sm text-gray-500 text-center -mt-4">
-          AI generates content to fill a full A4 page — ATS-friendly single-page format
+          AI generates concise single-page content — one A4 page only
         </p>
 
         {/* Font */}
