@@ -12,11 +12,13 @@ import {
 } from 'lucide-react';
 import { resumeApi, aiApi } from '../api';
 import { Resume, Experience, Education, emptyResume } from '../types';
-import { DEFAULT_RESUME_FONT, RESUME_FONTS, ResumeFont } from '../constants/resumeFonts';
+import { DEFAULT_RESUME_FONT } from '../constants/resumeFonts';
+import { DEFAULT_RESUME_FONT_SIZE } from '../constants/resumeFontSizes';
 import Input from '../components/Input';
 import Textarea from '../components/Textarea';
 import Button from '../components/Button';
-import ResumePreview from '../components/ResumePreview';
+import ResumeFontPicker from '../components/ResumeFontPicker';
+import ResumeFontSizePicker from '../components/ResumeFontSizePicker';
 
 export default function ResumeEditor() {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +30,7 @@ export default function ResumeEditor() {
   const [resume, setResume] = useState<Resume>(emptyResume());
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const [showAiGenerate, setShowAiGenerate] = useState(isNew && isAiMode);
   const [aiLoading, setAiLoading] = useState(false);
   const [improving, setImproving] = useState<string | null>(null);
@@ -54,6 +56,7 @@ export default function ResumeEditor() {
       setResume({
         ...data,
         fontFamily: data.fontFamily || DEFAULT_RESUME_FONT,
+        fontSize: data.fontSize || DEFAULT_RESUME_FONT_SIZE,
       });
     } catch {
       navigate('/dashboard');
@@ -230,14 +233,24 @@ export default function ResumeEditor() {
     }));
   };
 
-  const handlePrint = () => {
-    document.body.classList.add('printing-resume');
-    window.print();
-    window.addEventListener(
-      'afterprint',
-      () => document.body.classList.remove('printing-resume'),
-      { once: true }
-    );
+  const handlePreview = async () => {
+    setPreviewing(true);
+    try {
+      let resumeId = resume._id;
+      if (isNew || !resumeId) {
+        const { data } = await resumeApi.create(resume);
+        resumeId = data._id;
+        setResume(data);
+        navigate(`/editor/${data._id}`, { replace: true });
+      } else {
+        await resumeApi.update(resumeId, resume);
+      }
+      navigate(`/preview/${resumeId}`);
+    } catch {
+      alert('Failed to save resume before preview');
+    } finally {
+      setPreviewing(false);
+    }
   };
 
   if (loading) {
@@ -271,7 +284,7 @@ export default function ResumeEditor() {
               <Sparkles className="h-4 w-4" />
               AI Generate
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setShowPreview(true)}>
+            <Button variant="secondary" size="sm" onClick={handlePreview} loading={previewing}>
               <Eye className="h-4 w-4" />
               Preview
             </Button>
@@ -290,27 +303,23 @@ export default function ResumeEditor() {
 
         {/* Font */}
         <section className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Resume Font</h2>
-          <p className="text-sm text-gray-500 mb-4">Choose a commonly used font for your resume preview and PDF export.</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {RESUME_FONTS.map((font) => {
-              const selected = (resume.fontFamily || DEFAULT_RESUME_FONT) === font.id;
-              return (
-                <button
-                  key={font.id}
-                  type="button"
-                  onClick={() => setResume((prev) => ({ ...prev, fontFamily: font.id as ResumeFont }))}
-                  className={`rounded-lg border px-3 py-2.5 text-left text-sm transition-colors ${
-                    selected
-                      ? 'border-brand-500 bg-brand-50 text-brand-800 ring-1 ring-brand-500'
-                      : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                  style={{ fontFamily: font.family }}
-                >
-                  {font.label}
-                </button>
-              );
-            })}
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Typography</h2>
+          <p className="text-sm text-gray-500 mb-4">Choose the font and size for your resume preview and PDF export.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Font</label>
+              <ResumeFontPicker
+                value={resume.fontFamily || DEFAULT_RESUME_FONT}
+                onChange={(fontFamily) => setResume((prev) => ({ ...prev, fontFamily }))}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Font size</label>
+              <ResumeFontSizePicker
+                value={resume.fontSize || DEFAULT_RESUME_FONT_SIZE}
+                onChange={(fontSize) => setResume((prev) => ({ ...prev, fontSize }))}
+              />
+            </div>
           </div>
         </section>
 
@@ -535,29 +544,6 @@ export default function ResumeEditor() {
         </div>
       )}
 
-      {/* Preview Modal */}
-      {showPreview && (
-        <div className="resume-print-shell fixed inset-0 z-50 flex flex-col bg-gray-100">
-          <div className="resume-print-toolbar bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <h3 className="font-semibold">Resume Preview</h3>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={handlePrint}>
-                Print / Save PDF
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
-                <X className="h-4 w-4" />
-                Close
-              </Button>
-            </div>
-          </div>
-          <div className="resume-print-body flex-1 overflow-auto p-8 flex flex-col items-center bg-gray-200">
-            <p className="resume-print-hint text-sm text-gray-600 mb-4">
-              Full A4 page layout — use Print / Save PDF to export
-            </p>
-            <ResumePreview resume={resume} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

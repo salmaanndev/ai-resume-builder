@@ -29,6 +29,7 @@ export interface PersonalInfo {
 }
 
 import { DEFAULT_RESUME_FONT, ResumeFont } from '../constants/resumeFonts';
+import { DEFAULT_RESUME_FONT_SIZE, ResumeFontSize } from '../constants/resumeFontSizes';
 
 export interface Resume {
   _id?: string;
@@ -39,6 +40,7 @@ export interface Resume {
   skills: string[];
   template: 'modern' | 'classic' | 'minimal';
   fontFamily: ResumeFont;
+  fontSize: ResumeFontSize;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -60,4 +62,5 @@ export const emptyResume = (): Resume => ({
   skills: [],
   template: 'classic',
   fontFamily: DEFAULT_RESUME_FONT,
+  fontSize: DEFAULT_RESUME_FONT_SIZE,
 });
