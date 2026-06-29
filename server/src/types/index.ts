@@ -43,6 +43,8 @@ export type ResumeFont =
   | 'open-sans'
   | 'lato';
 
+export type ResumeFontSize = 'small' | 'medium' | 'large';
+
 export interface IResume {
   _id: mongoose.Types.ObjectId;
   title: string;
@@ -52,6 +54,7 @@ export interface IResume {
   skills: string[];
   template: 'modern' | 'classic' | 'minimal';
   fontFamily: ResumeFont;
+  fontSize: ResumeFontSize;
   createdAt: Date;
   updatedAt: Date;
 }

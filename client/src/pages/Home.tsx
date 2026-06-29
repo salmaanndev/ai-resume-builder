@@ -21,7 +21,7 @@ const features = [
   {
     icon: Download,
     title: 'Export & Print',
-    description: 'Preview your resume in real-time and print or save as PDF.',
+    description: 'Preview your resume as a PDF and download it instantly.',
   },
 ];
 

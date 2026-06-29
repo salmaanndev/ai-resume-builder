@@ -67,6 +67,11 @@ const resumeSchema = new Schema<IResumeDocument>(
       ],
       default: 'arial',
     },
+    fontSize: {
+      type: String,
+      enum: ['small', 'medium', 'large'],
+      default: 'medium',
+    },
   },
   { timestamps: true }
 );

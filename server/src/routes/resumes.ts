@@ -60,6 +60,7 @@ const resumeSchema = z.object({
       'lato',
     ])
     .optional(),
+  fontSize: z.enum(['small', 'medium', 'large']).optional(),
 });
 
 router.get('/', async (_req: Request, res: Response): Promise<void> => {
