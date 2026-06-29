@@ -75,7 +75,7 @@ export default function ResumePdfViewer({ resume }: ResumePdfViewerProps) {
   }, []);
 
   return (
-    <div ref={containerRef} className="resume-pdf-scroll-view">
+    <div ref={containerRef} className="resume-pdf-scroll-view h-full">
       {loading && (
         <div className="resume-pdf-status">
           <div className="animate-spin h-8 w-8 border-4 border-white border-t-transparent rounded-full" />

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { resumeApi, aiApi } from '../api';
 import { Resume, Experience, Education, emptyResume } from '../types';
-import { DEFAULT_RESUME_FONT } from '../constants/resumeFonts';
+import { DEFAULT_RESUME_FONT, normalizeResumeFont } from '../constants/resumeFonts';
 import { DEFAULT_RESUME_FONT_SIZE } from '../constants/resumeFontSizes';
 import Input from '../components/Input';
 import Textarea from '../components/Textarea';
@@ -55,7 +55,7 @@ export default function ResumeEditor() {
       const { data } = await resumeApi.getOne(resumeId);
       setResume({
         ...data,
-        fontFamily: data.fontFamily || DEFAULT_RESUME_FONT,
+        fontFamily: normalizeResumeFont(data.fontFamily),
         fontSize: data.fontSize || DEFAULT_RESUME_FONT_SIZE,
       });
     } catch {

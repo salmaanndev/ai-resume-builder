@@ -39,9 +39,7 @@ export type ResumeFont =
   | 'verdana'
   | 'tahoma'
   | 'trebuchet'
-  | 'roboto'
-  | 'open-sans'
-  | 'lato';
+  | 'roboto';
 
 export type ResumeFontSize = 'small' | 'medium' | 'large';
 
