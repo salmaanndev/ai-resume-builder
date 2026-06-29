@@ -36,6 +36,7 @@ export default function ResumeEditor() {
   const [improving, setImproving] = useState<string | null>(null);
 
   const [aiForm, setAiForm] = useState({
+    fullName: '',
     jobTitle: '',
     yearsOfExperience: '',
     industry: '',
@@ -88,10 +89,11 @@ export default function ResumeEditor() {
   };
 
   const handleAiGenerate = async () => {
-    if (!aiForm.jobTitle) return;
+    if (!aiForm.fullName.trim() || !aiForm.jobTitle) return;
     setAiLoading(true);
     try {
       const { data } = await aiApi.generate({
+        fullName: aiForm.fullName.trim(),
         jobTitle: aiForm.jobTitle,
         yearsOfExperience: aiForm.yearsOfExperience || undefined,
         industry: aiForm.industry || undefined,
@@ -101,7 +103,11 @@ export default function ResumeEditor() {
         ...prev,
         ...data,
         title: data.title || `${aiForm.jobTitle} Resume`,
-        personalInfo: { ...prev.personalInfo, ...data.personalInfo },
+        personalInfo: {
+          ...prev.personalInfo,
+          ...data.personalInfo,
+          fullName: aiForm.fullName.trim(),
+        },
       }));
       setShowAiGenerate(false);
     } catch (err: unknown) {
@@ -506,6 +512,13 @@ export default function ResumeEditor() {
               </button>
             </div>
             <div className="space-y-4">
+              <Input
+                label="Full Name"
+                value={aiForm.fullName}
+                onChange={(e) => setAiForm((prev) => ({ ...prev, fullName: e.target.value }))}
+                placeholder="e.g. John Doe"
+                required
+              />
               <Input
                 label="Target Job Title"
                 value={aiForm.jobTitle}

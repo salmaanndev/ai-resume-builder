@@ -15,6 +15,7 @@ import {
 const router = Router();
 
 const generateSchema = z.object({
+  fullName: z.string().min(1, 'Full name is required'),
   jobTitle: z.string().min(1, 'Job title is required'),
   yearsOfExperience: z.string().optional(),
   skills: z.array(z.string()).optional(),
@@ -48,6 +49,8 @@ router.post('/generate', async (req: Request, res: Response): Promise<void> => {
     const data = generateSchema.parse(req.body);
 
     const prompt = `Generate a professional ATS-friendly resume in JSON format for a ${data.jobTitle} position.
+Candidate full name: ${data.fullName}
+Use this exact full name in personalInfo.fullName — do not use a placeholder or invent a different name.
 ${data.yearsOfExperience ? `Years of experience: ${data.yearsOfExperience}` : ''}
 ${data.industry ? `Industry: ${data.industry}` : ''}
 ${data.skills?.length ? `Skills to include: ${data.skills.join(', ')}` : ''}
@@ -90,6 +93,11 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 
     const content = await chatComplete(prompt, true);
     const resume = enforceSinglePageResume(parseJsonResponse(content) as GeneratedResumePayload);
+    if (resume.personalInfo) {
+      resume.personalInfo.fullName = data.fullName.trim();
+    } else {
+      resume.personalInfo = { fullName: data.fullName.trim() };
+    }
     res.json(resume);
   } catch (error) {
     if (error instanceof z.ZodError) {
