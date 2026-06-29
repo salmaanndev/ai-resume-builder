@@ -62,8 +62,6 @@ const resumeSchema = new Schema<IResumeDocument>(
         'tahoma',
         'trebuchet',
         'roboto',
-        'open-sans',
-        'lato',
       ],
       default: 'arial',
     },

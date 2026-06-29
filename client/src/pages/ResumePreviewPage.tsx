@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { resumeApi } from '../api';
-import { DEFAULT_RESUME_FONT, ResumeFont } from '../constants/resumeFonts';
+import { DEFAULT_RESUME_FONT, normalizeResumeFont, ResumeFont } from '../constants/resumeFonts';
 import { DEFAULT_RESUME_FONT_SIZE, ResumeFontSize } from '../constants/resumeFontSizes';
 import { Resume } from '../types';
 import Button from '../components/Button';
@@ -29,7 +29,7 @@ export default function ResumePreviewPage() {
         const { data } = await resumeApi.getOne(id);
         setResume({
           ...data,
-          fontFamily: data.fontFamily || DEFAULT_RESUME_FONT,
+          fontFamily: normalizeResumeFont(data.fontFamily),
           fontSize: data.fontSize || DEFAULT_RESUME_FONT_SIZE,
         });
       } catch {
@@ -74,7 +74,7 @@ export default function ResumePreviewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+      <div className="flex items-center justify-center h-full">
         <div className="animate-spin h-8 w-8 border-4 border-brand-600 border-t-transparent rounded-full" />
       </div>
     );
@@ -83,7 +83,7 @@ export default function ResumePreviewPage() {
   if (!resume) return null;
 
   return (
-    <div className="resume-pdf-page min-h-[calc(100vh-4rem)] flex flex-col bg-gray-100">
+    <div className="resume-pdf-page h-full max-h-full flex flex-col overflow-hidden bg-gray-100">
       <div className="resume-pdf-toolbar bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <button
@@ -116,11 +116,11 @@ export default function ResumePreviewPage() {
           </Button>
         </div>
       </div>
-      <div className="resume-pdf-body flex-1 flex flex-col p-4 sm:p-6 min-h-0">
-        <p className="text-sm text-gray-600 mb-4 text-center">
-          Adjust font and size above — the PDF preview updates instantly.
+      <div className="resume-pdf-body flex-1 flex flex-col px-4 pt-3 pb-4 sm:px-6 sm:pt-4 sm:pb-5 min-h-0 overflow-hidden">
+        <p className="resume-pdf-hint text-sm text-gray-600 mb-3 text-center shrink-0">
+          Adjust font and size above — scroll inside the preview to view all pages.
         </p>
-        <div className="resume-pdf-viewer-container">
+        <div className="resume-pdf-viewer-container flex-1 min-h-0">
           <ResumePdfViewer resume={resume} />
         </div>
       </div>

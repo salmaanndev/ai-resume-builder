@@ -9,9 +9,7 @@ export type ResumeFont =
   | 'verdana'
   | 'tahoma'
   | 'trebuchet'
-  | 'roboto'
-  | 'open-sans'
-  | 'lato';
+  | 'roboto';
 
 export interface ResumeFontOption {
   id: ResumeFont;
@@ -31,8 +29,6 @@ export const RESUME_FONTS: ResumeFontOption[] = [
   { id: 'tahoma', label: 'Tahoma', family: 'Tahoma, Geneva, sans-serif' },
   { id: 'trebuchet', label: 'Trebuchet MS', family: '"Trebuchet MS", Helvetica, sans-serif' },
   { id: 'roboto', label: 'Roboto', family: 'Roboto, Arial, sans-serif' },
-  { id: 'open-sans', label: 'Open Sans', family: '"Open Sans", Arial, sans-serif' },
-  { id: 'lato', label: 'Lato', family: 'Lato, Arial, sans-serif' },
 ];
 
 export const DEFAULT_RESUME_FONT: ResumeFont = 'arial';
@@ -40,6 +36,13 @@ export const DEFAULT_RESUME_FONT: ResumeFont = 'arial';
 export const getResumeFontFamily = (font: ResumeFont | undefined): string => {
   const match = RESUME_FONTS.find((f) => f.id === font);
   return match?.family ?? RESUME_FONTS[0].family;
+};
+
+export const normalizeResumeFont = (font: string | undefined): ResumeFont => {
+  if (font && RESUME_FONT_IDS.includes(font as ResumeFont)) {
+    return font as ResumeFont;
+  }
+  return DEFAULT_RESUME_FONT;
 };
 
 export const RESUME_FONT_IDS = RESUME_FONTS.map((f) => f.id);

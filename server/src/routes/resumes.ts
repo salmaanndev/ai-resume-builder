@@ -56,8 +56,6 @@ const resumeSchema = z.object({
       'tahoma',
       'trebuchet',
       'roboto',
-      'open-sans',
-      'lato',
     ])
     .optional(),
   fontSize: z.enum(['small', 'medium', 'large']).optional(),
